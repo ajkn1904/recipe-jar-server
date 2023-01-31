@@ -24,6 +24,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run() {
     try {
 const usersCollection = client.db('recipeJar').collection('Users');
+const recipesCollection = client.db('recipeJar').collection('recipes');
 
 
 
@@ -31,7 +32,14 @@ const usersCollection = client.db('recipeJar').collection('Users');
             const users = req.body
             const result = await usersCollection.insertOne(users)
             res.send(result)
-        })
+        });
+
+
+        app.get('/recipes', async(req, res) => {
+            const query = {};
+            const recipes = await recipesCollection.find(query).toArray()
+            res.send(recipes)
+        });
 
     }
     finally{}
