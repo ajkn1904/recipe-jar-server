@@ -56,6 +56,14 @@ async function run() {
             res.send(recipes);
         });
 
+
+        
+        app.post('/users/recipes', async(req, res) => {
+           const recipe = req.body;
+           const result = await recipesCollection.insertOne(recipe);
+           res.send(recipe); 
+        });
+
     }
     finally { }
 }
