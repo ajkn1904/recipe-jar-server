@@ -6,11 +6,28 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 
 const app = express();
-
+const jwt = require('jsonwebtoken')
 
 
 app.use(cors());
 app.use(express.json());
+
+
+const verifyJwt = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).send('Unauthorized access');
+    }
+
+    const token = authHeader.split(' ')[1];
+    jwt.verify(token, process.env.ACCESS_TOKEN, function (error, decoded) {
+        if (error) {
+            return res.send(403).send({ message: 'Forbidden access' })
+        }
+        req.decoded = decoded;
+        next();
+    })
+}
 
 
 
@@ -25,6 +42,22 @@ async function run() {
     try {
         const usersCollection = client.db('recipeJar').collection('Users');
         const recipesCollection = client.db('recipeJar').collection('recipes');
+
+
+
+        app.get('/jwt', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email };
+            const user = await usersCollection.findOne(query)
+            console.log(user);
+            if (user) {
+                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, {
+                    expiresIn: '1d'
+                })
+                return res.send({ accessToken: token });
+            }
+            res.status(403).send({ accessToken: '' })
+        })
 
 
 
@@ -49,19 +82,19 @@ async function run() {
         });
 
 
-        app.get('/users/recipes', async (req, res) => {
+        app.get('/users/recipes', verifyJwt, async (req, res) => {
             const email = req.query.email;
-            const query = { userEmail: email};
+            const query = { userEmail: email };
             const recipes = await recipesCollection.find(query).toArray();
             res.send(recipes);
         });
 
 
-        
-        app.post('/users/recipes', async(req, res) => {
-           const recipe = req.body;
-           const result = await recipesCollection.insertOne(recipe);
-           res.send(recipe); 
+
+        app.post('/users/recipes', verifyJwt, async (req, res) => {
+            const recipe = req.body;
+            const result = await recipesCollection.insertOne(recipe);
+            res.send(recipe);
         });
 
     }
