@@ -78,6 +78,7 @@ async function run() {
 
 
 
+
         app.get('/recipes/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
@@ -86,6 +87,12 @@ async function run() {
         });
 
 
+        app.get('/recentRecipes', async (req, res) => {
+            const query = {};
+          const cursor = recipesCollection.find(query);
+          const newRecipe = await cursor.sort({_id:-1}).limit(3).toArray();
+          res.send(newRecipe);
+        });
 
 
         app.get('/users/recipes', verifyJwt, async (req, res) => {
@@ -126,9 +133,21 @@ async function run() {
             res.send(recipe);
         });
 
+
+
+        app.delete('/users/recipes/:id', verifyJwt, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const result = await recipesCollection.deleteOne(query);
+            res.send(result);
+        });
+
+
+        
     }
     finally { }
 }
+
 run().catch(console.log);
 
 
