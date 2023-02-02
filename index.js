@@ -68,11 +68,15 @@ async function run() {
         });
 
 
+
+
         app.get('/recipes', async (req, res) => {
             const query = {};
             const recipes = await recipesCollection.find(query).toArray()
             res.send(recipes)
         });
+
+
 
         app.get('/recipes/:id', async (req, res) => {
             const id = req.params.id;
@@ -82,12 +86,37 @@ async function run() {
         });
 
 
+
+
         app.get('/users/recipes', verifyJwt, async (req, res) => {
             const email = req.query.email;
             const query = { userEmail: email };
             const recipes = await recipesCollection.find(query).toArray();
             res.send(recipes);
         });
+
+
+
+        app.put('/users/recipes/:id', verifyJwt, async (req, res) => {
+            const id = req.params.id;
+            const data = req.body;
+            const query = { _id: ObjectId(id) };
+            const option = {
+                upsert: true
+            }
+            const updatedDoc = {
+                $set: {
+                    name: data.name,
+                    ingredients: data.ingredients,
+                    cooking_description: data.cooking_description,
+                    status: data.status
+                }
+            }
+            const result = await recipesCollection.updateOne(query, updatedDoc, option);
+            res.send(result);
+        });
+
+
 
 
 
